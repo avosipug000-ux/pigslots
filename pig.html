@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Однорукий бандит: Милые Свинки</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Cкрипт для интеграции с Telegram -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #ffe4f3;
+            background-image: url("https://i.postimg.cc/qByd1XTg/unnamed.jpg");
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            color: #4a044e; /* Dark purple text */
+            text-shadow: 2px 2px #fbcfe8;
+        }
+        .slot-machine-wrapper {
+            background: #fdf2f8; /* Very light pink */
+            border: 4px solid #4a044e; /* Dark purple border */
+            padding: 1rem;
+            box-shadow: 8px 8px 0 #db2777, 8px 8px 0 4px #4a044e; /* Pixelated shadow */
+        }
+        .display {
+            background: #fbcfe8; /* Light pink */
+            border: 4px solid #4a044e;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        .reel-window {
+            background-color: #000;
+            border: 4px solid #4a044e;
+            box-shadow: inset 2px 2px 0 0 #333;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 8px;
+            border-radius: 0;
+        }
+        .reel-container {
+            height: 8rem;
+            overflow: hidden;
+            background: #1e293b;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        .reel {
+            font-size: 5rem;
+            line-height: 8rem;
+            text-align: center;
+            transition: transform 2s cubic-bezier(0.33, 1, 0.68, 1);
+            will-change: transform;
+        }
+        .reel > div {
+            height: 8rem; /* 128px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls-panel {
+            background: #fdf2f8; /* Very light pink */
+            border: 4px solid #4a044e;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .spin-button {
+            background: #db2777; /* Pink */
+            color: white;
+            border: 4px solid #4a044e;
+            box-shadow: inset -4px -4px 0 0 #f9a8d4;
+            padding: 0.75rem;
+            width: 100%;
+            text-shadow: 2px 2px #be185d;
+            transition: all 0.1s ease-in-out;
+        }
+        .spin-button:active {
+            transform: translate(4px, 4px);
+            box-shadow: inset -2px -2px 0 0 #f9a8d4;
+        }
+        .spin-button:disabled {
+            background: #9ca3af;
+            box-shadow: inset -4px -4px 0 0 #e5e7eb;
+            cursor: not-allowed;
+            text-shadow: 2px 2px #4b5563;
+        }
+        input[type=range] {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; padding: 0;
+            background: transparent;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            height: 24px; width: 16px;
+            background: #db2777;
+            border: 4px solid #4a044e;
+            cursor: pointer;
+            margin-top: -12px;
+        }
+        input[type=range]::-moz-range-thumb {
+            height: 16px; width: 8px;
+            background: #db2777;
+            border: 4px solid #4a044e;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px;
+            background: #4a044e;
+        }
+        input[type=range]::-moz-range-track {
+            width: 100%; height: 4px;
+            background: #4a044e;
+        }
+        .symbol-jump { animation: jump 0.6s ease-in-out; }
+        @keyframes jump {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.3) rotate(-5deg); }
+        }
+        .message-pop { animation: pop-in 0.5s steps(4, end); }
+        @keyframes pop-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .leaf-container {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+            overflow: hidden;
+        }
+        .leaf {
+            position: absolute; top: -10%;
+            will-change: transform, opacity;
+            animation-name: fall;
+            animation-timing-function: linear;
+            animation-iteration-count: 1;
+        }
+        @keyframes fall {
+            to {
+                transform: translateY(110vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        #reset-button {
+            display: block; margin: 1.5rem auto 0;
+            padding: 0.5rem 1rem;
+            background: #a1a1aa; color: #27272a;
+            border: 4px solid #4a044e;
+            box-shadow: inset -4px -4px 0 0 #d4d4d8;
+            border-radius: 0;
+            transition: all 0.1s ease-in-out;
+            cursor: pointer; text-shadow: none;
+        }
+        #reset-button:hover { background: #b1b1ba; }
+        #reset-button:active {
+            transform: translate(4px, 4px);
+            box-shadow: inset -2px -2px 0 0 #d4d4d8;
+        }
+        /* Lever Styles - Redesigned */
+        .handle {
+            position: absolute;
+            top: 4rem;
+            right: -3.5rem;
+            width: 1rem;
+            height: 7rem;
+            background: #f59e0b; /* Golden yellow */
+            border: 4px solid #4a044e;
+            box-shadow: inset -4px 0 0 0 #b45309; /* 3D shade */
+            cursor: pointer;
+            z-index: 10;
+            transition: top 0.2s ease-in-out;
+        }
+        .handle::before {
+            content: '';
+            position: absolute;
+            bottom: -1rem;
+            left: -1rem;
+            width: 3rem;
+            height: 3rem;
+            background: #a1a1aa; /* Gray base */
+            border: 4px solid #4a044e;
+            box-shadow: inset -4px -4px 0 0 #d4d4d8;
+            z-index: -1;
+        }
+        .handle-knob {
+            position: absolute;
+            top: -1.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3rem;
+            height: 3rem;
+            background: #ef4444; /* Red */
+            border: 4px solid #4a044e;
+            box-shadow: inset -6px -6px 0 0 #b91c1c; /* Darker red */
+        }
+        .handle.pull {
+            top: 6rem; /* Animation target */
+        }
+        /* Admin Panel Styles */
+        .admin-panel.hidden {
+            display: none;
+        }
+        .admin-panel {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 400px;
+            z-index: 10000;
+        }
+        .admin-panel .panel-content {
+             background: #fdf2f8; border: 4px solid #4a044e;
+             padding: 1.5rem; text-align: center;
+        }
+        .admin-panel h2 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .admin-panel p { font-size: 0.8rem; margin-bottom: 1rem; text-shadow: none; color: #8c2b5d; }
+        .admin-panel .controls-container { display: flex; flex-direction: column; gap: 1rem; }
+        .admin-panel label { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .admin-panel label span:first-child { font-size: 1.5rem; }
+        .admin-panel label span:last-child { min-width: 2ch; text-align: right; }
+        .admin-panel .buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .admin-panel button { flex-grow: 1; padding: 0.5rem; font-size: 0.8rem; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="leaf-container" class="leaf-container"></div>
+
+    <div class="slot-machine-wrapper max-w-sm w-full relative">
+        <div id="handle" class="handle">
+            <div class="handle-knob"></div>
+        </div>
+        <div class="display space-y-2">
+            <div class="text-lg">Кредиты: <span id="credits-display" class="text-green-600">100</span></div>
+            <div id="message-display" class="text-sm h-5">Удачи!</div>
+        </div>
+        <div id="reel-window" class="reel-window my-4">
+            <div class="reel-container"><div id="reel1" class="reel"></div></div>
+            <div class="reel-container"><div id="reel2" class="reel"></div></div>
+            <div class="reel-container"><div id="reel3" class="reel"></div></div>
+        </div>
+        <div class="controls-panel space-y-4">
+            <div class="bet-selector">
+                <div class="flex justify-between items-center text-sm">
+                    <span>Ставка:</span>
+                    <span id="bet-amount-display" class="font-bold">5</span>
+                </div>
+                <input id="bet-slider" type="range" min="5" max="25" step="5" value="5" class="w-full">
+            </div>
+            <button id="spin-button" class="spin-button text-xl">Крутить!</button>
+        </div>
+        <button id="reset-button">Начать заново</button>
+    </div>
+
+    <!-- Admin Panel (hidden by default) -->
+    <div id="admin-panel" class="admin-panel hidden">
+        <div class="panel-content">
+            <h2>Секретные Настройки</h2>
+            <p>Настройте шанс выпадения символов (чем выше значение, тем чаще).</p>
+            <form id="admin-form">
+                <div class="controls-container">
+                    <!-- Сюда будут добавляться ползунки -->
+                </div>
+                <div class="buttons">
+                    <button type="submit" class="spin-button">Сохранить</button>
+                    <button type="button" id="close-admin" class="spin-button" style="background: #a1a1aa; box-shadow: inset -4px -4px 0 0 #e5e7eb; text-shadow: 2px 2px #4b5563;">Закрыть</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Telegram Mini App Integration ---
+            try {
+                const tg = window.Telegram.WebApp;
+                tg.ready(); // Сообщаем Telegram, что приложение готово
+                if (tg.themeParams && tg.themeParams.bg_color) {
+                    // Если у пользователя темная тема, пытаемся адаптировать фон
+                    document.body.style.backgroundColor = tg.themeParams.bg_color;
+                }
+            } catch (e) {
+                console.log("Not running in Telegram or script not loaded.");
+            }
+            // --- End of Integration ---
+
+            const reels = [document.getElementById('reel1'), document.getElementById('reel2'), document.getElementById('reel3')];
+            const spinButton = document.getElementById('spin-button');
+            const handle = document.getElementById('handle');
+            const resetButton = document.getElementById('reset-button');
+            const creditsDisplay = document.getElementById('credits-display');
+            const messageDisplay = document.getElementById('message-display');
+            const betSlider = document.getElementById('bet-slider');
+            const betAmountDisplay = document.getElementById('bet-amount-display');
+            
+            const symbols = ['🐷', '🌰', '🍄', '🍎', '🍂', '💎'];
+            const payouts = { '💎': { 3: 500, 2: 50 }, '🐷': { 3: 100, 2: 20 }, '🌰': { 3: 50, 2: 10 }, '🍄': { 3: 30, 2: 5 }, '🍎': { 3: 20, 2: 2 }, '🍂': { 3: 10, 2: 1 } };
+            const BASE_BET = 5;
+            const STARTING_CREDITS = 100;
+            const REEL_ITEM_HEIGHT = 128; // 8rem in pixels
+            const REEL_LOOPS = 10;
+            
+            let credits = STARTING_CREDITS;
+            let currentBet = BASE_BET;
+            let isSpinning = false;
+            let finalSymbolsElements = [];
+
+            // Admin Panel Logic
+            const reelWindow = document.getElementById('reel-window');
+            const adminPanel = document.getElementById('admin-panel');
+            const adminForm = document.getElementById('admin-form');
+            const closeAdminButton = document.getElementById('close-admin');
+            let adminClickCount = 0;
+            let adminClickTimer = null;
+            let originalWeights = { '💎': 1, '🐷': 2, '🌰': 3, '🍄': 5, '🍎': 6, '🍂': 8 };
+            let weightedSymbols = [];
+
+            function rebuildWeightedSymbols() {
+                weightedSymbols = [];
+                for (const symbol in originalWeights) {
+                    const weight = originalWeights[symbol];
+                    for (let i = 0; i < weight; i++) {
+                        weightedSymbols.push(symbol);
+                    }
+                }
+            }
+
+            function initGame() {
+                credits = STARTING_CREDITS;
+                updateCredits();
+                messageDisplay.textContent = 'Удачи!';
+                
+                betSlider.value = BASE_BET;
+                currentBet = BASE_BET;
+                betAmountDisplay.textContent = BASE_BET;
+                spinButton.textContent = `Крутить!`;
+                
+                rebuildWeightedSymbols();
+                setupReels();
+                updateButtonState();
+            }
+
+            function setupReels() {
+                reels.forEach(reel => {
+                    reel.style.transition = 'none';
+                    reel.style.transform = `translateY(0)`;
+                    reel.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
+                    
+                    for (let i = 0; i < REEL_LOOPS; i++) {
+                        symbols.forEach(symbol => {
+                            const el = document.createElement('div');
+                            el.textContent = symbol;
+                            fragment.appendChild(el);
+                        });
+                    }
+                    reel.appendChild(fragment);
+                });
+            }
+
+            function updateCredits() {
+                creditsDisplay.textContent = credits;
+                updateButtonState();
+            }
+            
+            function updateButtonState() {
+                if (isSpinning) return;
+                spinButton.disabled = credits < currentBet;
+            }
+
+            function getRandomSymbol() {
+                return weightedSymbols[Math.floor(Math.random() * weightedSymbols.length)];
+            }
+            
+            async function spin() {
+                if (isSpinning || credits < currentBet) return;
+
+                handle.classList.add('pull');
+                setTimeout(() => handle.classList.remove('pull'), 400);
+
+                isSpinning = true;
+                updateButtonState();
+                finalSymbolsElements = [];
+                
+                credits -= currentBet;
+                updateCredits();
+                messageDisplay.textContent = '...';
+                messageDisplay.classList.remove('message-pop');
+                
+                const finalResults = reels.map(() => getRandomSymbol());
+                const spinPromises = reels.map((reel, i) => animateReel(reel, finalResults[i], 2000 + i * 500));
+
+                await Promise.all(spinPromises);
+                checkWin(finalResults);
+                isSpinning = false;
+                updateButtonState();
+                if (credits < currentBet) {
+                    messageDisplay.textContent = 'Мало кредитов!';
+                }
+            }
+            
+            function animateReel(reel, finalSymbol, duration) {
+                return new Promise(resolve => {
+                    const totalSymbols = reel.children.length;
+                    const symbolsPerSet = symbols.length;
+                    const finalSymbolIndex = Array.from(reel.children).findIndex((el, idx) => el.textContent === finalSymbol && idx >= totalSymbols - (symbolsPerSet * 2));
+                    const targetPosition = -finalSymbolIndex * REEL_ITEM_HEIGHT;
+
+                    reel.style.transition = `transform ${duration / 1000}s cubic-bezier(0.33, 1, 0.68, 1)`;
+                    void reel.offsetHeight;
+                    reel.style.transform = `translateY(${targetPosition}px)`;
+                    
+                    finalSymbolsElements.push(reel.children[finalSymbolIndex]);
+
+                    setTimeout(() => {
+                        reel.style.transition = 'none';
+                        const baseSymbolIndex = symbols.indexOf(finalSymbol);
+                        const resetSetIndex = 1;
+                        const newResetIndex = (resetSetIndex * symbolsPerSet) + baseSymbolIndex;
+                        const newPos = -newResetIndex * REEL_ITEM_HEIGHT;
+                        reel.style.transform = `translateY(${newPos}px)`;
+                        resolve();
+                    }, duration + 100);
+                });
+            }
+
+            function checkWin(finalSymbols) {
+                let winAmount = 0; let winSymbol = '';
+                const counts = {};
+                finalSymbols.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
+
+                if (counts[finalSymbols[0]] === 3) {
+                    winSymbol = finalSymbols[0];
+                    winAmount = payouts[winSymbol][3];
+                    finalSymbolsElements.forEach(el => el.classList.add('symbol-jump'));
+                } else {
+                    for (const s in counts) {
+                        if (counts[s] === 2) {
+                            winSymbol = s;
+                            winAmount = payouts[s][2];
+                            finalSymbolsElements.forEach((el, i) => {
+                                if (finalSymbols[i] === s) el.classList.add('symbol-jump');
+                            });
+                            break;
+                        }
+                    }
+                }
+                
+                messageDisplay.classList.add('message-pop');
+                if (winAmount > 0) {
+                    showWinAnimation();
+                    const betMultiplier = currentBet / BASE_BET;
+                    const finalWinAmount = winAmount * betMultiplier;
+                    credits += finalWinAmount;
+                    updateCredits();
+                    messageDisplay.textContent = `Выигрыш ${finalWinAmount}!`;
+                } else {
+                    messageDisplay.textContent = 'Попробуйте еще раз!';
+                }
+
+                setTimeout(() => {
+                    finalSymbolsElements.forEach(el => el.classList.remove('symbol-jump'));
+                    messageDisplay.classList.remove('message-pop');
+                }, 1500);
+            }
+            
+            function showWinAnimation() {
+                const leafContainer = document.getElementById('leaf-container');
+                const leafTypes = ['🍂', '🍁', '🍃', '🌸'];
+                for (let i = 0; i < 30; i++) {
+                    const leaf = document.createElement('div');
+                    leaf.classList.add('leaf');
+                    leaf.textContent = leafTypes[Math.floor(Math.random() * leafTypes.length)];
+                    leaf.style.left = `${Math.random() * 100}vw`;
+                    leaf.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
+                    const duration = Math.random() * 3 + 4;
+                    const delay = Math.random() * 2;
+                    leaf.style.animationDuration = `${duration}s`;
+                    leaf.style.animationDelay = `${delay}s`;
+                    leafContainer.appendChild(leaf);
+                    setTimeout(() => leaf.remove(), (duration + delay) * 1000);
+                }
+            }
+            
+            // Admin Panel event listeners and functions
+            function handleAdminClick() {
+                adminClickCount++;
+                clearTimeout(adminClickTimer);
+                adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1500);
+                if (adminClickCount >= 10) {
+                    adminClickCount = 0;
+                    clearTimeout(adminClickTimer);
+                    openAdminPanel();
+                }
+            }
+
+            function openAdminPanel() {
+                const controlsContainer = adminForm.querySelector('.controls-container');
+                controlsContainer.innerHTML = '';
+                for (const symbol of symbols) {
+                    if (!originalWeights[symbol]) continue;
+                    const weight = originalWeights[symbol];
+                    const label = document.createElement('label');
+                    const symbolSpan = document.createElement('span');
+                    symbolSpan.textContent = symbol;
+                    const slider = document.createElement('input');
+                    slider.type = 'range'; slider.min = 1; slider.max = 20; slider.value = weight;
+                    slider.dataset.symbol = symbol;
+                    const valueSpan = document.createElement('span');
+                    valueSpan.textContent = weight;
+                    slider.oninput = () => { valueSpan.textContent = slider.value; };
+                    label.appendChild(symbolSpan);
+                    label.appendChild(slider);
+                    label.appendChild(valueSpan);
+                    controlsContainer.appendChild(label);
+                }
+                adminPanel.classList.remove('hidden');
+            }
+
+            function handleAdminSave(event) {
+                event.preventDefault();
+                const newWeights = {};
+                const inputs = event.target.querySelectorAll('input[type="range"]');
+                inputs.forEach(input => {
+                    newWeights[input.dataset.symbol] = parseInt(input.value);
+                });
+                originalWeights = { ...originalWeights, ...newWeights };
+                rebuildWeightedSymbols();
+                adminPanel.classList.add('hidden');
+            }
+            
+            betSlider.addEventListener('input', () => {
+                currentBet = parseInt(betSlider.value);
+                betAmountDisplay.textContent = currentBet;
+                updateButtonState();
+            });
+
+            spinButton.addEventListener('click', spin);
+            handle.addEventListener('click', spin);
+            resetButton.addEventListener('click', initGame);
+            reelWindow.addEventListener('click', handleAdminClick);
+            adminForm.addEventListener('submit', handleAdminSave);
+            closeAdminButton.addEventListener('click', () => adminPanel.classList.add('hidden'));
+
+            initGame();
+        });
+    </script>
+</body>
+</html>
