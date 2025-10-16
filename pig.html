@@ -226,41 +226,45 @@
         .admin-panel .buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
         .admin-panel button { flex-grow: 1; padding: 0.5rem; font-size: 0.8rem; }
 
-        /* Responsive adjustments for mobile - Reworked for better results */
+        /* Responsive adjustments for mobile - Reworked Again for better visibility */
         @media (max-width: 480px) {
             body {
                 padding: 0.5rem;
-                display: block; /* Allow scrolling if needed on small screens */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
             }
             .slot-machine-wrapper {
                 padding: 0.5rem;
-                box-shadow: 6px 6px 0 #db2777, 6px 6px 0 3px #4a044e;
-                max-width: 300px; /* Limit width to make it smaller */
-                margin: 1rem auto; /* Center it */
+                box-shadow: 4px 4px 0 #db2777, 4px 4px 0 2px #4a044e;
+                max-width: 280px; /* Further reduced width */
+                margin: 0 auto;
             }
             .display {
                 padding: 0.25rem;
             }
-            .display .text-lg { font-size: 0.875rem; }
-            .display .text-sm { font-size: 0.75rem; }
+            .display .text-lg { font-size: 0.75rem; }
+            .display .text-sm { font-size: 0.625rem; }
 
-            .reel-container, .reel > div { height: 6rem; }
+            .reel-container, .reel > div { height: 5rem; } /* Reduced height */
             .reel {
-                font-size: 4rem;
-                line-height: 6rem;
+                font-size: 3.5rem; /* Reduced font size */
+                line-height: 5rem; /* Match new height */
             }
             .spin-button.text-xl {
-                font-size: 1rem;
+                font-size: 0.875rem;
                 padding: 0.5rem;
             }
             #reset-button {
-                margin-top: 1rem;
-                padding: 0.25rem 0.75rem;
+                margin-top: 0.75rem;
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
             }
             .handle {
-                transform: scale(0.8);
-                top: 3.5rem;
-                right: -2.5rem;
+                transform: scale(0.7); /* Scaled down the handle */
+                top: 3rem;
+                right: -2.2rem;
             }
         }
     </style>
@@ -385,7 +389,6 @@
 
             function setupReels() {
                 // Dynamically set reel height for responsive animation
-                // This must run before populating the reels
                 if (reels[0] && reels[0].parentElement) {
                      REEL_ITEM_HEIGHT = reels[0].parentElement.offsetHeight;
                 }
@@ -394,12 +397,13 @@
                     reel.style.transition = 'none';
                     reel.style.transform = `translateY(0)`;
                     reel.innerHTML = '';
-
-                    const reelDivStyle = reel.querySelector('div');
-                    if(reelDivStyle) {
-                        reelDivStyle.style.height = `${REEL_ITEM_HEIGHT}px`;
-                        reel.style.lineHeight = `${REEL_ITEM_HEIGHT}px`;
+                    
+                    // Apply new height to children
+                    const children = reel.children;
+                    for (let child of children) {
+                        child.style.height = `${REEL_ITEM_HEIGHT}px`;
                     }
+                    reel.style.lineHeight = `${REEL_ITEM_HEIGHT}px`;
 
                     const fragment = document.createDocumentFragment();
                     
