@@ -225,6 +225,21 @@
         .admin-panel label span:last-child { min-width: 2ch; text-align: right; }
         .admin-panel .buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
         .admin-panel button { flex-grow: 1; padding: 0.5rem; font-size: 0.8rem; }
+
+        /* Responsive adjustments for mobile */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+            .slot-machine-wrapper {
+                transform: scale(0.85);
+                transform-origin: top center;
+                box-shadow: 6px 6px 0 #db2777, 6px 6px 0 3px #4a044e;
+            }
+             #reset-button {
+                margin-top: 0.5rem;
+             }
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -301,8 +316,9 @@
             const payouts = { '💎': { 3: 500, 2: 50 }, '🐷': { 3: 100, 2: 20 }, '🌰': { 3: 50, 2: 10 }, '🍄': { 3: 30, 2: 5 }, '🍎': { 3: 20, 2: 2 }, '🍂': { 3: 10, 2: 1 } };
             const BASE_BET = 5;
             const STARTING_CREDITS = 100;
-            const REEL_ITEM_HEIGHT = 128; // 8rem in pixels
             const REEL_LOOPS = 10;
+            // Height is now dynamic
+            let REEL_ITEM_HEIGHT = 128;
             
             let credits = STARTING_CREDITS;
             let currentBet = BASE_BET;
@@ -359,6 +375,11 @@
                         });
                     }
                     reel.appendChild(fragment);
+                    
+                    // Dynamically set reel height for responsive animation
+                    if (reel.children.length > 0) {
+                        REEL_ITEM_HEIGHT = reel.children[0].offsetHeight;
+                    }
                 });
             }
 
@@ -551,3 +572,4 @@
     </script>
 </body>
 </html>
+
