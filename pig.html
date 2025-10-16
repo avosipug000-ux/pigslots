@@ -149,7 +149,7 @@
         #reset-button {
             display: block; margin: 1.5rem auto 0;
             padding: 0.5rem 1rem;
-            background: #a1a1aa; color: #27272a;
+            background: #a1a1aa; color: #2727a;
             border: 4px solid #4a044e;
             box-shadow: inset -4px -4px 0 0 #d4d4d8;
             border-radius: 0;
@@ -226,19 +226,42 @@
         .admin-panel .buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
         .admin-panel button { flex-grow: 1; padding: 0.5rem; font-size: 0.8rem; }
 
-        /* Responsive adjustments for mobile */
+        /* Responsive adjustments for mobile - Reworked for better results */
         @media (max-width: 480px) {
             body {
                 padding: 0.5rem;
+                display: block; /* Allow scrolling if needed on small screens */
             }
             .slot-machine-wrapper {
-                transform: scale(0.85);
-                transform-origin: top center;
+                padding: 0.5rem;
                 box-shadow: 6px 6px 0 #db2777, 6px 6px 0 3px #4a044e;
+                max-width: 300px; /* Limit width to make it smaller */
+                margin: 1rem auto; /* Center it */
             }
-             #reset-button {
-                margin-top: 0.5rem;
-             }
+            .display {
+                padding: 0.25rem;
+            }
+            .display .text-lg { font-size: 0.875rem; }
+            .display .text-sm { font-size: 0.75rem; }
+
+            .reel-container, .reel > div { height: 6rem; }
+            .reel {
+                font-size: 4rem;
+                line-height: 6rem;
+            }
+            .spin-button.text-xl {
+                font-size: 1rem;
+                padding: 0.5rem;
+            }
+            #reset-button {
+                margin-top: 1rem;
+                padding: 0.25rem 0.75rem;
+            }
+            .handle {
+                transform: scale(0.8);
+                top: 3.5rem;
+                right: -2.5rem;
+            }
         }
     </style>
 </head>
@@ -361,10 +384,23 @@
             }
 
             function setupReels() {
+                // Dynamically set reel height for responsive animation
+                // This must run before populating the reels
+                if (reels[0] && reels[0].parentElement) {
+                     REEL_ITEM_HEIGHT = reels[0].parentElement.offsetHeight;
+                }
+
                 reels.forEach(reel => {
                     reel.style.transition = 'none';
                     reel.style.transform = `translateY(0)`;
                     reel.innerHTML = '';
+
+                    const reelDivStyle = reel.querySelector('div');
+                    if(reelDivStyle) {
+                        reelDivStyle.style.height = `${REEL_ITEM_HEIGHT}px`;
+                        reel.style.lineHeight = `${REEL_ITEM_HEIGHT}px`;
+                    }
+
                     const fragment = document.createDocumentFragment();
                     
                     for (let i = 0; i < REEL_LOOPS; i++) {
@@ -375,11 +411,6 @@
                         });
                     }
                     reel.appendChild(fragment);
-                    
-                    // Dynamically set reel height for responsive animation
-                    if (reel.children.length > 0) {
-                        REEL_ITEM_HEIGHT = reel.children[0].offsetHeight;
-                    }
                 });
             }
 
